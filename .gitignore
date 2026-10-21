@@ -1,0 +1,32 @@
+# --- Credenciales y secretos (NUNCA versionar) ---
+.env
+*.pem
+*.key
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Datos generados y artefactos temporales ---
+tmp/
+out/
+instance/*.db
+instance/*.db-wal
+instance/*.db-shm
+*.log
+
+# --- Datos de prueba generados ---
+data/*.xlsx
+!data/ejemplo_evento.xlsx
+
+# --- IDE / sistema operativo ---
+.idea/
+.vscode/
+.pytest_cache/
+__pycache__/
+.DS_Store
+Thumbs.db

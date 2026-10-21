@@ -1,0 +1,17 @@
+flask>=3.0
+pandas>=2.2
+openpyxl>=3.1
+reportlab>=4.0
+pypdf>=4.0
+python-dotenv>=1.0
+fuzzywuzzy>=0.18
+python-Levenshtein>=0.20
+requests>=2.31
+
+# Opcional: cifrado AES-256 de los certificados (si no se instala, pypdf
+# usa el cifrado estándar RC4-128).  ->  pip install pypdf[crypto]
+# pypdf[crypto]>=4.0
+
+# Opcional: NLP avanzado con spaCy (si no esta instalado el sistema usa
+# el respaldo basado en reglas + similitud difusa de fuzzywuzzy).
+# pip install spacy && python -m spacy download es_core_news_sm
