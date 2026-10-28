@@ -81,11 +81,11 @@ DIAS_RETENCION = _int("DIAS_RETENCION", 30)           # purga de trazabilidad an
 # --------------------------------------------------------------------------
 # Identidad institucional
 # --------------------------------------------------------------------------
-UNIVERSIDAD = os.getenv("UNIVERSIDAD", "Universidad de La Salle")
+UNIVERSIDAD = os.getenv("UNIVERSIDAD", "Corporación Universitaria Unilasallista")
 PROGRAMA = os.getenv("PROGRAMA", "Tópicos de Inteligencia Artificial")
 COLOR_INSTITUCIONAL = os.getenv("COLOR_INSTITUCIONAL", "#007A33")
-COLOR_SECUNDARIO = os.getenv("COLOR_SECUNDARIO", "#0A3D62")
-CIUDAD = os.getenv("CIUDAD", "Bogotá D.C.")
+COLOR_SECUNDARIO = os.getenv("COLOR_SECUNDARIO", "#0B1037")
+CIUDAD = os.getenv("CIUDAD", "Caldas, Antioquia")
 
 
 # --------------------------------------------------------------------------

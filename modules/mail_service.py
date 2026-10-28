@@ -55,7 +55,7 @@ PLANTILLA_CUERPO = """\
                 Certificado Unilasallista
               </h1>
               <p style="margin:6px 0 0;font-size:13px;color:#666;">
-                Universidad de La Salle · {UNIVERSIDAD}
+                {UNIVERSIDAD} · Caldas, Antioquia
               </p>
             </td>
           </tr>
@@ -73,7 +73,7 @@ PLANTILLA_CUERPO = """\
               </p>
               <p style="margin:0 0 22px;">
                 Agradecemos su participación y esperamos volver a contar con su
-                presencia en los próximos eventos de la Universidad.
+                presencia en los próximos eventos de la Institución.
               </p>
               <p style="margin:0;color:#333;">
                 Cordialmente,<br>
@@ -88,7 +88,7 @@ PLANTILLA_CUERPO = """\
               Este mensaje y sus datos personales son enviados con fines
               institucionales de acreditación. Tratamiento conforme a la
               Ley 1581 de 2012 (Habeas Data) y a la política de protección de
-              datos de la Universidad de La Salle.
+              datos de la Corporación Universitaria Unilasallista.
             </td>
           </tr>
         </table>
@@ -166,6 +166,34 @@ def construir_mensaje(
         LOG.info("[SMTP] El adjunto %s no existe; se envía sin PDF", ruta.name)
 
     return mensaje
+
+
+def obtener_vista_previa_correo(
+    destinatario: str = "participante@unilasallista.edu.co",
+    nombre: str = "Juan Pérez González",
+    evento: str = "Congreso de Inteligencia Artificial 2026",
+    rol: str = "Ponente",
+    archivo_adjunto: str = "Certificado_Juan_Perez.pdf",
+) -> Dict[str, str]:
+    """Genera la estructura de visualización del correo institucional con la plantilla ajustada."""
+    cfg = obtener_config_smtp()
+    asunto = ASUNTO.format(evento=evento)
+    cuerpo = (
+        PLANTILLA_CUERPO.replace("{COLOR_INSTITUCIONAL}", config.COLOR_INSTITUCIONAL)
+        .replace("{UNIVERSIDAD}", config.UNIVERSIDAD)
+        .replace("{NOMBRE}", nombre or destinatario)
+        .replace("{ROL}", rol)
+        .replace("{EVENTO}", evento)
+        .replace("{SMTP_FROM_NAME}", str(cfg["from_name"]))
+    )
+    remitente = formataddr((str(cfg["from_name"]), str(cfg["from"])))
+    return {
+        "remitente": remitente,
+        "destinatario": destinatario,
+        "asunto": asunto,
+        "cuerpo_html": cuerpo,
+        "archivo_adjunto": archivo_adjunto,
+    }
 
 
 def _conectar_smtp(cfg: Dict[str, object]) -> smtplib.SMTP:

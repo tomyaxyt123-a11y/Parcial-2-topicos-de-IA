@@ -31,12 +31,40 @@ def llenar_pptx(
     nombre = str(datos.get("nombre_completo") or datos.get("nombres") or "Participante").strip()
     rol = str(datos.get("rol") or "Participante").strip()
     aporte = str(datos.get("ponencia") or datos.get("conferencia") or "").strip()
+    evento = str(datos.get("evento") or "Evento Académico").strip()
+    fecha = str(datos.get("fecha") or pdf_generator.formatear_fecha_es()).strip()
+    documento = str(datos.get("documento") or "").strip()
     modalidad = f"{rol} · «{aporte}»" if aporte else rol
 
     reemplazos = {
         "<NOMBRE>": nombre,
+        "<nombre>": nombre,
+        "{NOMBRE}": nombre,
+        "{nombre}": nombre,
+        "[NOMBRE]": nombre,
+        "<<NOMBRE>>": nombre,
         "<PROMEDIO>": "CERTIFICADO",
         "<CURSO>": modalidad,
+        "<MODALIDAD>": modalidad,
+        "{MODALIDAD}": modalidad,
+        "<EVENTO>": evento,
+        "<evento>": evento,
+        "{EVENTO}": evento,
+        "{evento}": evento,
+        "[EVENTO]": evento,
+        "<ROL>": rol,
+        "<rol>": rol,
+        "{ROL}": rol,
+        "{rol}": rol,
+        "[ROL]": rol,
+        "<FECHA>": fecha,
+        "<fecha>": fecha,
+        "{FECHA}": fecha,
+        "{fecha}": fecha,
+        "[FECHA]": fecha,
+        "<DOCUMENTO>": documento,
+        "{DOCUMENTO}": documento,
+        "<APORTE>": aporte,
         "OTORTGA": "OTORGA",
         "Faculdad": "Facultad",
     }
@@ -44,10 +72,23 @@ def llenar_pptx(
     for shape in slide.shapes:
         if shape.has_text_frame:
             for p in shape.text_frame.paragraphs:
+                # 1. Reemplazo individual por fragmento (run)
                 for run in p.runs:
                     for k, v in reemplazos.items():
                         if k in run.text:
                             run.text = run.text.replace(k, v)
+
+                # 2. Reemplazo a nivel de párrafo por si el placeholder quedó dividido entre varios runs
+                p_text = p.text
+                modificado = False
+                for k, v in reemplazos.items():
+                    if k in p_text:
+                        p_text = p_text.replace(k, v)
+                        modificado = True
+                if modificado and p.runs:
+                    p.runs[0].text = p_text
+                    for r in p.runs[1:]:
+                        r.text = ""
 
     Path(ruta_salida_pptx).parent.mkdir(parents=True, exist_ok=True)
     prs.save(ruta_salida_pptx)
@@ -124,13 +165,19 @@ def generar_pptx_incietec(
     datos: Dict[str, object],
     carpeta_salida: Path,
     slug: str,
+    ruta_plantilla: Optional[str] = None,
 ) -> Dict[str, str]:
     """Genera el archivo PPTX llenando los campos sin convertir aún a PDF (ultra rápido)."""
     nombre_base = f"{slug}"
     ruta_pptx = carpeta_salida / f"{nombre_base}.pptx"
     ruta_pdf = carpeta_salida / f"{nombre_base}.pdf"
 
-    llenar_pptx(str(PLANTILLA_PPTX_OFICIAL), datos, str(ruta_pptx))
+    plantilla_origen = (
+        str(ruta_plantilla)
+        if (ruta_plantilla and Path(ruta_plantilla).exists())
+        else str(PLANTILLA_PPTX_OFICIAL)
+    )
+    llenar_pptx(plantilla_origen, datos, str(ruta_pptx))
 
     return {
         "pptx": str(ruta_pptx),
@@ -146,9 +193,10 @@ def generar_certificado_incietec(
     slug: str,
     proteger: bool = False,
     contrasena: Optional[str] = None,
+    ruta_plantilla: Optional[str] = None,
 ) -> Dict[str, str]:
-    """Genera el certificado a partir de Certificados.pptx llenando los campos."""
-    res = generar_pptx_incietec(datos, carpeta_salida, slug)
+    """Genera el certificado a partir de la plantilla PPTX oficial o personalizada llenando los campos."""
+    res = generar_pptx_incietec(datos, carpeta_salida, slug, ruta_plantilla=ruta_plantilla)
     ruta_pptx = Path(res["pptx"])
     ruta_pdf = Path(res["pdf"])
 

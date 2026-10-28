@@ -3,22 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Certificado Unilasallista · Universidad de La Salle</title>
-  <meta name="description" content="Sistema institucional de generación y envío de certificados de participación — Universidad de La Salle">
+  <title>Certificado Unilasallista · Corporación Universitaria Unilasallista</title>
+  <meta name="description" content="Sistema institucional corporativo de generación y envío de certificados académicos de acreditación — Corporación Universitaria Unilasallista">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <!-- ═══ HEADER CORPORATIVO ═══════════════════════════════════════════════ -->
   <header class="barra">
     <div class="contenedor barra__contenido">
-      <img src="{{ url_for('static', filename='logo_unilasalle.png') }}" alt="Universidad de La Salle" class="logo">
+      <img src="{{ url_for('static', filename='logo_unilasallista.png') }}" alt="Corporación Universitaria Unilasallista" class="logo">
       <div class="barra__titulo">
         <h1>Certificado Unilasallista</h1>
-        <p>Tópicos de Inteligencia Artificial · Universidad de La Salle · 2026&#8209;II</p>
+        <p>Tópicos de Inteligencia Artificial · Corporación Universitaria Unilasallista · Caldas, Antioquia</p>
       </div>
-      <div class="estado" id="estado-sistema">
-        <span class="punto"></span> Verificando…
+      
+      <div class="barra__acciones">
+        <button type="button" class="btn-config-envio" onclick="abrirModalConfigCorreo()" id="btn-abrir-config-correo" title="Ajustar correo remitente del sistema">
+          <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Configuración de envíos</span>
+        </button>
+
+        <div class="estado" id="estado-sistema">
+          <span class="punto"></span> Verificando estado…
+        </div>
       </div>
     </div>
   </header>
@@ -27,91 +35,191 @@
   <main class="contenedor">
 
     <!-- PASOS VISUALES -->
-    <div style="margin: 28px 0 8px;">
+    <div style="margin: 28px 0 12px;">
       <div class="pasos" id="pasos-guia">
-        <div class="paso activo" id="paso-1">Cargar Excel</div>
-        <div class="paso" id="paso-2">Generar certificados</div>
-        <div class="paso" id="paso-3">Descargar / Enviar</div>
+        <div class="paso activo" id="paso-1">
+          <span class="paso-num">1</span> Cargar Excel
+        </div>
+        <div class="paso" id="paso-2">
+          <span class="paso-num">2</span> Generar certificados
+        </div>
+        <div class="paso" id="paso-3">
+          <span class="paso-num">3</span> Descargar / Enviar
+        </div>
       </div>
     </div>
 
-    <!-- ── FORMULARIO ────────────────────────────────────────────────────── -->
+    <!-- ── FORMULARIO PRINCIPAL ─────────────────────────────────────────── -->
     <section class="panel">
-      <h2>📋 Procesar evento</h2>
+      <h2>
+        <svg class="icon-svg-seccion" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+        <span>Procesar evento</span>
+      </h2>
 
       <form id="form-procesar" enctype="multipart/form-data">
 
         <div class="fila">
-          <label for="evento">Nombre del evento <span class="obligatorio">*</span></label>
+          <label for="evento">Nombre del evento académico <span class="obligatorio">*</span></label>
           <input type="text" id="evento" name="evento" required
-                 placeholder="Ej: Congreso de Inteligencia Artificial 2026">
+                 placeholder="Ejemplo: Congreso Internacional de Inteligencia Artificial 2026">
         </div>
 
         <div class="fila">
-          <label for="dependencia">Dependencia organizadora</label>
+          <label for="dependencia">Dependencia u organización interna</label>
           <input type="text" id="dependencia" name="dependencia"
-                 placeholder="Ej: Facultad de Ingeniería · Departamento de Sistemas">
+                 placeholder="Ejemplo: Facultad de Ingenierías · Departamento de Sistemas">
         </div>
 
-        <!-- Plantilla -->
+        <!-- ── GESTIÓN Y AJUSTE DE PLANTILLA ── -->
         <div class="fila">
-          <div class="plantilla-badge">
-            <div class="badge-icon">🎓</div>
-            <div>
-              <div class="badge-title">Plantilla oficial aplicada automáticamente: <strong>Certificados.pptx</strong></div>
-              <div class="badge-sub">Formato institucional INCIETEC. Los campos de nombre, rol y modalidad se llenan solos con los datos del Excel.</div>
+          <label>Plantilla de certificados y correspondencia institucional <span class="obligatorio">*</span></label>
+          <div class="plantilla-contenedor">
+            
+            <!-- Badge de plantilla activa -->
+            <div class="plantilla-badge" id="plantilla-badge-activa">
+              <div class="badge-icon" id="plantilla-icono">
+                <svg class="icon-svg-badge" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+              </div>
+              <div style="flex: 1;">
+                <div class="badge-title">
+                  <span>Plantilla seleccionada:</span> <strong id="plantilla-nombre-activa">Certificados.pptx</strong>
+                  <span class="badge-tipo-tag" id="plantilla-tipo-tag">PowerPoint (.pptx)</span>
+                </div>
+                <div class="badge-sub" id="plantilla-desc-activa">
+                  Formato oficial INCIETEC Unilasallista. Sustituye automáticamente nombre, rol, aporte y evento.
+                </div>
+              </div>
             </div>
+
+            <!-- Botones de acción -->
+            <div class="plantilla-acciones-barra">
+              <!-- Botón para descargar plantilla guía oficial de referencia -->
+              <a href="/descargar-plantilla-guia" id="btn-descargar-guia" class="btn-descargar-guia" title="Descargar plantilla oficial editable de referencia">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Descargar plantilla guía (.pptx)</span>
+              </a>
+
+              <!-- Botón para cargar otra plantilla -->
+              <input type="file" id="input-archivo-plantilla" accept=".pptx,.pdf" style="display:none;" onchange="subirNuevaPlantilla(event)">
+              <button type="button" class="btn-subir-plantilla" onclick="document.getElementById('input-archivo-plantilla').click()">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Cargar otra plantilla (.pptx o .pdf)</span>
+              </button>
+
+              <!-- Selector de plantillas -->
+              <div class="plantilla-select-group">
+                <span class="select-label-mini">Plantillas disponibles:</span>
+                <select id="select-plantillas" class="select-estilizado" onchange="seleccionarPlantillaExistente(this.value)">
+                  <option value="Certificados.pptx">Certificados.pptx (Oficial Unilasallista)</option>
+                  <option value="templates/certificado_base.pdf">certificado_base.pdf (PDF Unilasallista)</option>
+                </select>
+              </div>
+
+              <!-- Botón ver ajuste al correo -->
+              <button type="button" class="btn-ver-ajuste-correo" onclick="toggleVistaPreviaCorreo()">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span>Ver ajuste al correo</span>
+              </button>
+            </div>
+
+            <!-- Subtexto explicativo de la plantilla guía -->
+            <div class="plantilla-guia-info">
+              <svg class="icon-svg info-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <span><strong>Plantilla editable de referencia:</strong> Puedes descargar la plantilla guía oficial para ver cómo están organizados los marcadores de texto (<code>&lt;NOMBRE&gt;</code>, <code>&lt;EVENTO&gt;</code>, <code>&lt;ROL&gt;</code>, <code>&lt;FECHA&gt;</code>) y usarlos en tus nuevos certificados institucionales.</span>
+            </div>
+
+            <!-- Previsualización de cómo se ajusta al correo -->
+            <div id="caja-ajuste-correo" class="ajuste-correo-box oculto">
+              <div class="ajuste-correo-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                  <div>
+                    <strong>Ajuste de la plantilla al envío por correo electrónico</strong>
+                    <div style="font-size: 12px; color: #1e40af; opacity: 0.9;">Así es como cada participante recibe su certificado personalizado:</div>
+                  </div>
+                </div>
+                <button type="button" class="btn-cerrar-mini" onclick="toggleVistaPreviaCorreo()" aria-label="Cerrar vista previa">
+                  <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+              <div class="ajuste-correo-cuerpo">
+                <div class="ajuste-meta-fila">
+                  <span class="meta-label">De:</span>
+                  <span class="meta-val" id="ajuste-remitente">Certificados Unilasallista &lt;tmontoya60@unilasallista.edu.co&gt;</span>
+                </div>
+                <div class="ajuste-meta-fila">
+                  <span class="meta-label">Para:</span>
+                  <span class="meta-val" id="ajuste-destinatario">correo_del_participante@dominio.com</span>
+                </div>
+                <div class="ajuste-meta-fila">
+                  <span class="meta-label">Asunto:</span>
+                  <span class="meta-val" id="ajuste-asunto">Certificado de participación — <span id="ajuste-evento-txt">[Evento ingresado arriba]</span></span>
+                </div>
+                <div class="ajuste-meta-fila ajuste-adjunto-fila">
+                  <span class="meta-label">Adjunto:</span>
+                  <span class="badge-adjunto-preview" id="ajuste-adjunto">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    <span>Certificado_[Nombre_Participante].pdf</span>
+                  </span>
+                  <span class="adjunto-nota" id="ajuste-nota-plantilla">Generado con la plantilla activa (<strong id="ajuste-plantilla-fuente">Certificados.pptx</strong>)</span>
+                </div>
+                <div class="ajuste-email-preview" id="ajuste-email-html">
+                  <!-- Llenado dinámico -->
+                </div>
+              </div>
+            </div>
+
           </div>
+          <!-- Input oculto para enviar al backend en el formulario -->
           <input type="hidden" id="plantilla" name="plantilla" value="Certificados.pptx">
         </div>
 
-        <!-- Excel -->
+        <!-- Carga de archivo Excel -->
         <div class="fila">
-          <label for="excel">📂 Archivo Excel (.xlsx) <span class="obligatorio">*</span></label>
+          <label for="excel">
+            <span>Archivo Excel de participantes (.xlsx)</span> <span class="obligatorio">*</span>
+          </label>
           <input type="file" id="excel" name="excel" accept=".xlsx,.xlsm" required>
           <small>
-            Debe contener las hojas:
+            Estructura requerida de hojas:
             {% for hoja in hojas %}<code>{{ hoja }}</code>{% if not loop.last %}, {% endif %}{% endfor %}.
             <br>
-            <a href="/descargar-ejemplo" id="link-ejemplo"
-               style="display:inline-flex; align-items:center; gap:5px; margin-top:8px; color:#007a33; font-weight:700; font-size:12.5px; text-decoration:none; padding:6px 12px; background:#f0fdf4; border:1px solid #86efac; border-radius:7px; transition:.15s;"
-               onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-              📥 Descargar Excel de ejemplo listo para usar
+            <a href="/descargar-ejemplo" id="link-ejemplo" class="link-descargar-ejemplo">
+              <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Descargar Excel de ejemplo listo para usar</span>
             </a>
           </small>
         </div>
 
-        <!-- Checkbox -->
-        <div class="fila">
-          <label class="check-fila" for="reprocesar">
-            <input type="checkbox" id="reprocesar" name="reprocesar" value="true">
-            <span>🔄 Forzar regeneración completa de certificados en PowerPoint (si ya existen en disco)</span>
-          </label>
-        </div>
-
         <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px;">
           <button type="submit" id="btn-procesar" class="btn-primary">
-            <span id="btn-icono">⚡</span>
+            <span id="btn-icono">
+              <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </span>
             <span id="btn-texto">Generar certificados</span>
           </button>
-          <button type="button" id="btn-limpiar-form" class="btn-secondary" onclick="iniciarNuevoCertificado()" style="display: inline-flex; align-items: center; gap: 8px;">
-            <span>➕</span>
+          
+          <button type="button" id="btn-limpiar-form" class="btn-secondary" onclick="iniciarNuevoCertificado()">
+            <svg class="icon-svg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             <span>Nuevo certificado / Limpiar formulario</span>
           </button>
         </div>
 
         <!-- ── CAJA DE PROGRESO EN VIVO ── -->
-        <div id="progreso-generacion" class="oculto" style="margin-top: 18px; padding: 16px 20px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; display: none;">
+        <div id="progreso-generacion" class="oculto" style="margin-top: 18px; padding: 18px 22px; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; display: none;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-            <span class="spinner" style="width: 22px; height: 22px; border-width: 3px;"></span>
-            <strong id="progreso-titulo" style="color: #065f46; font-size: 14.5px;">Generando certificados institucionales…</strong>
-            <span id="progreso-tiempo" style="margin-left: auto; font-size: 12.5px; font-weight: 700; color: #047857; background: #d1fae5; padding: 3px 10px; border-radius: 20px;">⏱️ 0s</span>
+            <span class="spinner" style="width: 22px; height: 22px; border-width: 3px; border-top-color: #1d4ed8;"></span>
+            <strong id="progreso-titulo" style="color: #1e3a8a; font-size: 14.5px;">Generando certificados institucionales…</strong>
+            <span id="progreso-tiempo" style="margin-left: auto; font-size: 12.5px; font-weight: 700; color: #1e40af; background: #dbeafe; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+              <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>0s</span>
+            </span>
           </div>
-          <p id="progreso-subtitulo" style="font-size: 12.5px; color: #166534; margin: 0; line-height: 1.5;">
-            PowerPoint está diseñando y exportando cada certificado en formato oficial de alta resolución. Por favor espera un momento.
+          <p id="progreso-subtitulo" style="font-size: 12.5px; color: #3b82f6; margin: 0; line-height: 1.5;">
+            PowerPoint está renderizando y exportando cada certificado en formato oficial de alta resolución. Por favor espera un momento.
           </p>
-          <div style="margin-top: 10px; height: 6px; background: #bbf7d0; border-radius: 6px; overflow: hidden;">
-            <div id="progreso-barra" style="width: 20%; height: 100%; background: #00b854; border-radius: 6px; transition: width 0.4s ease;"></div>
+          <div style="margin-top: 10px; height: 6px; background: #dbeafe; border-radius: 6px; overflow: hidden;">
+            <div id="progreso-barra" style="width: 20%; height: 100%; background: #1d4ed8; border-radius: 6px; transition: width 0.4s ease;"></div>
           </div>
         </div>
 
@@ -120,19 +228,28 @@
 
     <!-- ── RESULTADO ─────────────────────────────────────────────────────── -->
     <section class="panel oculto" id="panel-resultado">
-      <!-- Se llena dinámicamente por JS -->
+      <!-- Se llena dinámicamente por JS con SVGs limpios -->
     </section>
 
     <!-- ── CERTIFICADOS GUARDADOS E HISTORIAL ─────────────────────────────── -->
     <section class="panel" id="panel-historial">
       <div class="historial-header">
         <div>
-          <h2>📁 Certificados Guardados e Historial</h2>
-          <p class="subtitulo-seccion">Todos los eventos y certificados generados quedan guardados aquí de forma permanente. Puedes volver a descargarlos en ZIP, ver los PDF o reenviarlos por correo.</p>
+          <h2>
+            <svg class="icon-svg-seccion" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>Certificados Guardados e Historial</span>
+          </h2>
+          <p class="subtitulo-seccion">Registro permanente de certificados generados. Puedes descargar el paquete ZIP consolidado, consultar PDFs o reenviar correos en cualquier momento.</p>
         </div>
         <div class="acciones">
-          <input type="text" id="filtro-historial" placeholder="🔍 Buscar por evento o persona…" oninput="filtrarHistorial()">
-          <button type="button" id="btn-recargar-historial" class="btn-secondary" onclick="cargarHistorialCompleto()">🔄 Actualizar historial</button>
+          <div class="input-con-icono-inline">
+            <svg class="icon-svg search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="filtro-historial" placeholder="Buscar por evento o persona…" oninput="filtrarHistorial()">
+          </div>
+          <button type="button" id="btn-recargar-historial" class="btn-secondary" onclick="cargarHistorialCompleto()">
+            <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Actualizar historial</span>
+          </button>
         </div>
       </div>
       <div id="contenedor-historial" class="historial-lista">
@@ -140,21 +257,128 @@
       </div>
     </section>
 
-    <!-- ── TRAZABILIDAD ──────────────────────────────────────────────────── -->
+    <!-- ── TRAZABILIDAD Y AUDITORÍA ──────────────────────────────────────── -->
     <section class="panel">
-      <h2>📊 Registro de auditoría y trazabilidad</h2>
+      <h2>
+        <svg class="icon-svg-seccion" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Registro de auditoría y trazabilidad</span>
+      </h2>
       <div class="acciones">
-        <input type="text" id="filtro-evento" placeholder="🔍 Filtrar por nombre de evento…">
-        <button type="button" id="btn-trazabilidad" class="btn-secondary">🔄 Actualizar</button>
+        <div class="input-con-icono-inline">
+          <svg class="icon-svg search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="filtro-evento" placeholder="Filtrar por nombre de evento…">
+        </div>
+        <button type="button" id="btn-trazabilidad" class="btn-secondary">
+          <svg class="icon-svg" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          <span>Actualizar</span>
+        </button>
       </div>
       <div class="tabla-scroll"><table id="tabla-trazabilidad"></table></div>
     </section>
 
   </main>
 
+  <!-- ═══ MODAL CONFIGURACIÓN DE CORREO REMITENTE ═════════════════════════ -->
+  <div class="modal-overlay oculto" id="modal-config-correo" role="dialog" aria-modal="true" aria-labelledby="modal-config-titulo">
+    <div class="modal-contenedor">
+      <div class="modal-cabecera">
+        <div class="modal-titulo-wrap">
+          <div class="modal-icono-wrap">
+            <svg class="icon-svg-lg" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </div>
+          <div>
+            <h3 id="modal-config-titulo">Configuración del Correo Remitente</h3>
+            <p class="modal-subtitulo">Gestión de la cuenta y nombre institucional para la transmisión de certificados.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-cerrar" onclick="cerrarModalConfigCorreo()" aria-label="Cerrar modal">
+          <svg class="icon-svg" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <!-- Alerta de seguridad tras actualización exitosa -->
+      <div id="modal-alerta-seguridad" class="alerta-seguridad-box oculto">
+        <div class="alerta-icono-wrap">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <div class="alerta-texto" id="modal-alerta-texto">
+          <strong>Advertencia:</strong> El correo de envío ha sido modificado exitosamente. Todos los envíos futuros se realizarán desde esta nueva dirección.
+        </div>
+      </div>
+
+      <form id="form-config-correo" onsubmit="guardarConfigCorreo(event)" class="modal-form">
+        <!-- Indicador de estado actual -->
+        <div class="config-estado-actual">
+          <div class="meta-item">
+            <span class="meta-title">Servidor SMTP:</span>
+            <span class="meta-data" id="cfg-smtp-host">smtp.office365.com:587</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-title">Remitente vigente:</span>
+            <span class="meta-data remitente-pill" id="cfg-remitente-actual">tmontoya60@unilasallista.edu.co</span>
+          </div>
+        </div>
+
+        <div class="modal-campo">
+          <label for="cfg-input-correo">Correo electrónico remitente <span class="obligatorio">*</span></label>
+          <div class="input-con-icono">
+            <svg class="icon-svg input-icono" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <input type="email" id="cfg-input-correo" name="smtp_from" required
+                   placeholder="ejemplo: certificados@unilasallista.edu.co">
+          </div>
+          <small class="campo-ayuda">Esta dirección figurará en el remitente institucional de cada correo transmitido.</small>
+        </div>
+
+        <div class="modal-campo">
+          <label for="cfg-input-nombre">Nombre visible institucional del remitente</label>
+          <div class="input-con-icono">
+            <svg class="icon-svg input-icono" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <input type="text" id="cfg-input-nombre" name="smtp_from_name"
+                   placeholder="ejemplo: Certificados Unilasallista">
+          </div>
+          <small class="campo-ayuda">Nombre de la institución o dependencia emisora (ej. Certificados Unilasallista).</small>
+        </div>
+
+        <div class="modal-campo">
+          <label for="cfg-input-password">
+            <span>Contraseña de correo / Contraseña de aplicación SMTP</span>
+            <span class="badge-password-status configurada" id="cfg-password-badge">Configurada</span>
+          </label>
+          <div class="input-con-icono">
+            <svg class="icon-svg input-icono" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <input type="password" id="cfg-input-password" name="smtp_pass" class="input-con-toggle"
+                   placeholder="Escribe la contraseña para envíos reales" autocomplete="new-password">
+            <button type="button" class="btn-toggle-password" id="btn-toggle-pass" onclick="toggleVisibilidadPassword()" title="Mostrar/ocultar contraseña" aria-label="Mostrar u ocultar contraseña">
+              <svg class="icon-svg" id="icono-ojo-pass" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+          <small class="campo-ayuda">Requerida por el servidor (Office 365 / Outlook) para autenticar la transmisión real. Dejar en blanco para conservar la contraseña existente.</small>
+        </div>
+
+        <div class="nota-seguridad">
+          <svg class="icon-svg" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <div>
+            <strong>Aviso de seguridad institucional:</strong> La modificación del remitente surte efecto inmediato en el motor de envíos y se guarda en la configuración del servidor sin interrumpir el servicio.
+          </div>
+        </div>
+
+        <div class="modal-acciones">
+          <button type="button" class="btn-secundario" onclick="cerrarModalConfigCorreo()">Cancelar</button>
+          <button type="submit" class="btn-primario" id="btn-guardar-cfg">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span id="btn-guardar-cfg-texto">Guardar y actualizar remitente</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ═══ FOOTER ══════════════════════════════════════════════════════════ -->
   <footer class="pie">
-    <p>🔒 Uso exclusivo institucional · Tratamiento de datos conforme a la Ley 1581 de 2012 (Habeas Data) · Universidad de La Salle</p>
+    <p>
+      <svg class="icon-svg" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      <span>Uso exclusivo institucional · Tratamiento de datos conforme a la Ley 1581 de 2012 (Habeas Data) · Corporación Universitaria Unilasallista · Caldas, Antioquia</span>
+    </p>
   </footer>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>

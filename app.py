@@ -20,6 +20,7 @@ from __future__ import annotations
 import io
 import logging
 import os
+import re
 import shutil
 import uuid
 import zipfile
@@ -49,18 +50,28 @@ MAX_UPLOAD_MB = config.MAX_CONTENT_LENGTH / (1024 * 1024)
 # Utilidades
 # ==========================================================================
 def _validar_plantilla(ruta: Optional[str]) -> Optional[str]:
-    """Valida que la plantilla esté dentro del proyecto y prioriza Certificados.pptx."""
-    if not ruta or str(ruta).strip() in {"", "Certificados.pptx"}:
+    """Valida que la plantilla exista y esté dentro del proyecto."""
+    if not ruta or str(ruta).strip() == "":
         candidata_pptx = config.BASE_DIR / "Certificados.pptx"
         if candidata_pptx.exists():
             return str(candidata_pptx)
         candidata = config.TEMPLATES_DIR / "certificado_base.pdf"
         return str(candidata) if candidata.exists() else None
 
+    # Si es el archivo oficial por defecto
+    if str(ruta).strip() == "Certificados.pptx":
+        candidata_pptx = config.BASE_DIR / "Certificados.pptx"
+        if candidata_pptx.exists():
+            return str(candidata_pptx)
+
     raiz = config.BASE_DIR.resolve()
     candidata = Path(ruta)
     if not candidata.is_absolute():
-        candidata = config.BASE_DIR / candidata
+        en_templates = config.TEMPLATES_DIR / candidata
+        if en_templates.exists():
+            candidata = en_templates
+        else:
+            candidata = config.BASE_DIR / candidata
     try:
         resuelta = candidata.resolve()
     except OSError:
@@ -105,7 +116,7 @@ def procesar_evento(
     dependencia: str = "",
     enviar: bool = True,
     forzar_envio_real: bool = False,
-    ignorar_ya_enviados: bool = False,
+    ignorar_ya_enviados: bool = True,
 ) -> Dict[str, object]:
     """Ejecuta el flujo completo para un evento y devuelve el reporte.
 
@@ -202,9 +213,18 @@ def procesar_evento(
 
     totales = {"total": 0, "ok": 0, "error": 0, "omitido": 0}
 
-    es_pptx = (
-        plantilla_valida and Path(plantilla_valida).suffix.lower() == ".pptx"
-    ) or (config.BASE_DIR / "Certificados.pptx").exists()
+    if plantilla_valida:
+        es_pptx = Path(plantilla_valida).suffix.lower() == ".pptx"
+    else:
+        candidata_pptx = config.BASE_DIR / "Certificados.pptx"
+        if candidata_pptx.exists():
+            es_pptx = True
+            plantilla_valida = str(candidata_pptx)
+        else:
+            es_pptx = False
+            plantilla_valida = str(config.TEMPLATES_DIR / "certificado_base.pdf")
+
+    detalle["plantilla_utilizada"] = Path(plantilla_valida).name if plantilla_valida else "Certificados.pptx"
 
     evento_seguro = secure_filename(evento or "evento") or "evento"
     carpeta_evento = config.OUT_DIR / evento_seguro
@@ -247,8 +267,10 @@ def procesar_evento(
         datos_pdf["evento"] = evento
         datos_pdf.setdefault("fecha", pdf_generator.formatear_fecha_es())
 
-        if es_pptx and (config.BASE_DIR / "Certificados.pptx").exists():
-            res_gen = pptx_filler.generar_pptx_incietec(datos_pdf, carpeta_evento, slug)
+        if es_pptx and plantilla_valida and Path(plantilla_valida).exists():
+            res_gen = pptx_filler.generar_pptx_incietec(
+                datos_pdf, carpeta_evento, slug, ruta_plantilla=plantilla_valida
+            )
             rutas_pptx_a_convertir.append(res_gen["pptx"])
             items_preparados.append((participante, datos_pdf, Path(res_gen["pdf"]), res_gen["nombre_pdf"], res_gen["nombre_pptx"], True))
         else:
@@ -268,12 +290,18 @@ def procesar_evento(
 
         try:
             if not ruta_pdf.exists():
-                plantilla_fondo = config.TEMPLATES_DIR / "Certificados.pdf"
-                if not plantilla_fondo.exists():
-                    plantilla_fondo = config.TEMPLATES_DIR / "certificado_base.pdf"
+                fondo_a_usar = None
+                if plantilla_valida and Path(plantilla_valida).suffix.lower() == ".pdf" and Path(plantilla_valida).exists():
+                    fondo_a_usar = plantilla_valida
+                else:
+                    plantilla_fondo = config.TEMPLATES_DIR / "Certificados.pdf"
+                    if not plantilla_fondo.exists():
+                        plantilla_fondo = config.TEMPLATES_DIR / "certificado_base.pdf"
+                    fondo_a_usar = str(plantilla_fondo) if plantilla_fondo.exists() else None
+
                 pdf_generator.generar_certificado(
                     datos_pdf,
-                    str(plantilla_fondo) if plantilla_fondo.exists() else None,
+                    fondo_a_usar,
                     str(ruta_pdf),
                     proteger=config.PROTEGER_PDF,
                     contrasena=_contrasena_pdf(participante),
@@ -390,6 +418,38 @@ def descargar_ejemplo():
     )
 
 
+@app.route("/descargar-plantilla-guia")
+def descargar_plantilla_guia():
+    """Descarga la plantilla guía oficial editable (.pptx o .pdf) con los placeholders institucionales."""
+    nombre_archivo = request.args.get("archivo", "Certificados.pptx")
+    ruta = config.BASE_DIR / secure_filename(nombre_archivo)
+    if not ruta.exists():
+        ruta = config.TEMPLATES_DIR / secure_filename(nombre_archivo)
+    if not ruta.exists():
+        ruta = config.BASE_DIR / "Certificados.pptx"
+    if not ruta.exists():
+        return jsonify({"ok": False, "error": "No se encontró el archivo de plantilla guía"}), 404
+
+    nombre_descarga = (
+        "Plantilla_Guia_Certificados_Unilasallista.pptx"
+        if ruta.suffix.lower() == ".pptx"
+        else f"Plantilla_Guia_{ruta.name}"
+    )
+
+    mime = (
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        if ruta.suffix.lower() == ".pptx"
+        else "application/pdf"
+    )
+
+    return send_file(
+        str(ruta),
+        as_attachment=True,
+        download_name=nombre_descarga,
+        mimetype=mime,
+    )
+
+
 @app.route("/procesar", methods=["POST"])
 def procesar():
     """Procesa un evento: carga el Excel, valida, genera PDF y envía."""
@@ -397,7 +457,8 @@ def procesar():
     dependencia = (request.form.get("dependencia") or "").strip()
     plantilla = request.form.get("plantilla") or None
     enviar_real = str(request.form.get("enviar_real", "")).strip().lower() in {"1", "true", "on", "yes"}
-    reprocesar = str(request.form.get("reprocesar", "")).strip().lower() in {"1", "true", "on", "yes"}
+    # Todo certificado creado debe ser procesado y enviado sí o sí
+    ignorar_ya_enviados = True
     archivo = request.files.get("excel")
 
     if not evento:
@@ -424,7 +485,7 @@ def procesar():
             plantilla=plantilla,
             dependencia=dependencia,
             forzar_envio_real=enviar_real,
-            ignorar_ya_enviados=reprocesar,
+            ignorar_ya_enviados=ignorar_ya_enviados,
         )
     finally:
         try:
@@ -595,6 +656,124 @@ def api_historial():
     return jsonify({"ok": True, "historial": resultado})
 
 
+def actualizar_config_remitente(
+    nuevo_correo: str,
+    nuevo_nombre: Optional[str] = None,
+    nueva_clave: Optional[str] = None,
+) -> None:
+    """Actualiza dinámicamente el correo, nombre y credencial SMTP en memoria y los persiste en .env."""
+    import re
+    nuevo_correo = (nuevo_correo or "").strip()
+    config.SMTP_FROM = nuevo_correo
+    os.environ["SMTP_FROM"] = nuevo_correo
+
+    # En la mayoría de proveedores (Office 365, Gmail) el usuario de login SMTP coincide con el correo
+    config.SMTP_USER = nuevo_correo
+    os.environ["SMTP_USER"] = nuevo_correo
+
+    if nuevo_nombre is not None and str(nuevo_nombre).strip():
+        config.SMTP_FROM_NAME = str(nuevo_nombre).strip()
+        os.environ["SMTP_FROM_NAME"] = config.SMTP_FROM_NAME
+
+    clave_limpia = str(nueva_clave).strip() if nueva_clave is not None else ""
+    if clave_limpia:
+        config.SMTP_PASS = clave_limpia
+        os.environ["SMTP_PASS"] = clave_limpia
+
+    env_path = config.BASE_DIR / ".env"
+    if env_path.exists():
+        try:
+            contenido = env_path.read_text(encoding="utf-8")
+
+            # SMTP_FROM
+            if "SMTP_FROM=" in contenido:
+                contenido = re.sub(r"^SMTP_FROM=.*$", f"SMTP_FROM={config.SMTP_FROM}", contenido, flags=re.MULTILINE)
+            else:
+                contenido += f"\nSMTP_FROM={config.SMTP_FROM}\n"
+
+            # SMTP_USER
+            if "SMTP_USER=" in contenido:
+                contenido = re.sub(r"^SMTP_USER=.*$", f"SMTP_USER={config.SMTP_USER}", contenido, flags=re.MULTILINE)
+            else:
+                contenido += f"\nSMTP_USER={config.SMTP_USER}\n"
+
+            # SMTP_FROM_NAME
+            if "SMTP_FROM_NAME=" in contenido:
+                contenido = re.sub(r"^SMTP_FROM_NAME=.*$", f"SMTP_FROM_NAME={config.SMTP_FROM_NAME}", contenido, flags=re.MULTILINE)
+            else:
+                contenido += f"\nSMTP_FROM_NAME={config.SMTP_FROM_NAME}\n"
+
+            # SMTP_PASS si se suministró una nueva
+            if clave_limpia:
+                if "SMTP_PASS=" in contenido:
+                    contenido = re.sub(r"^SMTP_PASS=.*$", f"SMTP_PASS={config.SMTP_PASS}", contenido, flags=re.MULTILINE)
+                else:
+                    contenido += f"\nSMTP_PASS={config.SMTP_PASS}\n"
+
+            env_path.write_text(contenido, encoding="utf-8")
+            LOG.info("[SMTP] Remitente y credenciales actualizados en memoria y en .env: %s <%s>", config.SMTP_FROM_NAME, config.SMTP_FROM)
+        except Exception as exc:
+            LOG.warning("[SMTP] No fue posible persistir en .env: %s", exc)
+
+
+@app.route("/api/configuracion-correo", methods=["GET", "POST"])
+def api_configuracion_correo():
+    """Consulta o actualiza dinámicamente el correo remitente, contraseña y nombre institucional del sistema."""
+    tiene_clave = bool(config.SMTP_PASS and str(config.SMTP_PASS).strip())
+
+    if request.method == "POST":
+        datos = request.get_json(silent=True) or request.form
+        nuevo_correo = (datos.get("smtp_from") or datos.get("correo") or "").strip()
+        nuevo_nombre = datos.get("smtp_from_name") or datos.get("nombre")
+        nueva_clave = datos.get("smtp_pass") or datos.get("password") or datos.get("clave")
+
+        if not nuevo_correo:
+            return jsonify({"ok": False, "error": "El correo del remitente es obligatorio."}), 400
+
+        if not ia_validator.validar_correo_ia(nuevo_correo):
+            return jsonify({
+                "ok": False,
+                "error": f"El correo «{nuevo_correo}» no tiene una estructura de correo electrónico válida."
+            }), 400
+
+        actualizar_config_remitente(nuevo_correo, nuevo_nombre, nueva_clave)
+        tiene_clave = bool(config.SMTP_PASS and str(config.SMTP_PASS).strip())
+
+        return jsonify({
+            "ok": True,
+            "smtp_from": config.SMTP_FROM,
+            "smtp_from_name": config.SMTP_FROM_NAME,
+            "tiene_password": tiene_clave,
+            "mensaje": "Advertencia: El correo de envío ha sido modificado exitosamente. Todos los envíos futuros se realizarán desde esta nueva dirección.",
+            "advertencia": "Advertencia: El correo de envío ha sido modificado exitosamente. Todos los envíos futuros se realizarán desde esta nueva dirección.",
+            "mensaje_advertencia": "Advertencia: El correo de envío ha sido modificado exitosamente. Todos los envíos futuros se realizarán desde esta nueva dirección.",
+            "config": {
+                "smtp_from": config.SMTP_FROM,
+                "smtp_from_name": config.SMTP_FROM_NAME,
+                "smtp_host": config.SMTP_HOST,
+                "smtp_port": config.SMTP_PORT,
+                "tiene_password": tiene_clave,
+                "simulacion": mail_service.envio_simulado(),
+            }
+        })
+
+    return jsonify({
+        "ok": True,
+        "smtp_from": config.SMTP_FROM,
+        "smtp_from_name": config.SMTP_FROM_NAME,
+        "tiene_password": tiene_clave,
+        "config": {
+            "smtp_from": config.SMTP_FROM,
+            "smtp_from_name": config.SMTP_FROM_NAME,
+            "smtp_host": config.SMTP_HOST,
+            "smtp_port": config.SMTP_PORT,
+            "tiene_password": tiene_clave,
+            "simulacion": mail_service.envio_simulado(),
+            "configurado": mail_service.smtp_configurado(),
+        }
+    })
+
+
 @app.route("/api/estado")
 def api_estado():
     """Estado del sistema: SMTP, plantilla y estadísticas de la base de datos."""
@@ -610,6 +789,7 @@ def api_estado():
                 "configurado": mail_service.smtp_configurado(),
                 "simulacion": mail_service.envio_simulado(),
                 "remitente": config.SMTP_FROM,
+                "remitente_nombre": config.SMTP_FROM_NAME,
             },
             "plantilla": {"ruta": str(plantilla), "existe": plantilla.exists()},
             "base_datos": {"ruta": str(tracker.ruta_db()), "existe": tracker.ruta_db().exists()},
@@ -642,14 +822,117 @@ def api_envios():
 
 @app.route("/api/plantillas")
 def api_plantillas():
-    """Lista las plantillas PDF disponibles en `templates/`."""
-    archivos = [
-        {"nombre": p.name, "ruta": str(p.relative_to(config.BASE_DIR))}
-        for p in sorted(config.TEMPLATES_DIR.glob("*.pdf"))
-    ]
-    if (config.BASE_DIR / "Certificados.pptx").exists():
-        archivos.append({"nombre": "Certificados.pptx (PowerPoint)", "ruta": "Certificados.pptx"})
+    """Lista las plantillas disponibles (.pdf y .pptx) en `templates/` y directorio raíz."""
+    archivos = []
+    # 1. Certificados.pptx en la raíz si existe
+    pptx_oficial = config.BASE_DIR / "Certificados.pptx"
+    if pptx_oficial.exists():
+        archivos.append({
+            "nombre": "certificado_base.pdf" if not (config.TEMPLATES_DIR / "certificado_base.pdf").exists() else "Certificados.pptx",
+            "titulo": "Certificados.pptx (Oficial INCIETEC)",
+            "archivo": "Certificados.pptx",
+            "ruta": "Certificados.pptx",
+            "tipo": "pptx",
+            "es_oficial": True,
+            "descripcion": "Plantilla oficial PowerPoint INCIETEC con diseño institucional y campos autocompletables.",
+        })
+
+    # 2. Archivos en templates/
+    for p in sorted(config.TEMPLATES_DIR.glob("*")):
+        if p.suffix.lower() in {".pdf", ".pptx"}:
+            if p.name == "Certificados.pdf" and pptx_oficial.exists():
+                continue
+            tipo = "pptx" if p.suffix.lower() == ".pptx" else "pdf"
+            desc = "Plantilla base de acreditación en formato PDF." if tipo == "pdf" else "Plantilla personalizada en PowerPoint."
+            if p.name == "certificado_base.pdf":
+                desc = "Plantilla base institucional en PDF con membrete y firmas de La Salle."
+            archivos.append({
+                "nombre": p.name,
+                "titulo": f"{p.name} ({tipo.upper()})",
+                "archivo": p.name,
+                "ruta": str(p.relative_to(config.BASE_DIR)).replace("\\", "/"),
+                "tipo": tipo,
+                "es_oficial": p.name in {"certificado_base.pdf", "Certificados.pptx"},
+                "descripcion": desc,
+            })
+
+    # Asegurar que certificado_base.pdf siempre esté presente si existe
+    base_pdf = config.TEMPLATES_DIR / "certificado_base.pdf"
+    if base_pdf.exists() and not any(x["nombre"] == "certificado_base.pdf" for x in archivos):
+        archivos.append({
+            "nombre": "certificado_base.pdf",
+            "titulo": "certificado_base.pdf (PDF)",
+            "archivo": "certificado_base.pdf",
+            "ruta": str(base_pdf.relative_to(config.BASE_DIR)).replace("\\", "/"),
+            "tipo": "pdf",
+            "es_oficial": True,
+            "descripcion": "Plantilla base institucional en PDF.",
+        })
+
     return jsonify({"ok": True, "plantillas": archivos})
+
+
+@app.route("/api/cargar-plantilla", methods=["POST"])
+def api_cargar_plantilla():
+    """Permite subir una nueva plantilla (.pptx o .pdf) para los certificados."""
+    archivo = (
+        request.files.get("plantilla_archivo")
+        or request.files.get("archivo")
+        or request.files.get("plantilla")
+    )
+    if not archivo or not archivo.filename:
+        return jsonify({"ok": False, "error": "No se seleccionó ningún archivo de plantilla"}), 400
+
+    nombre_seguro = secure_filename(archivo.filename)
+    extension = Path(nombre_seguro).suffix.lower()
+    if extension not in {".pptx", ".pdf"}:
+        return jsonify({
+            "ok": False,
+            "error": "Formato no válido. Debe adjuntar un archivo PowerPoint (.pptx) o PDF (.pdf)."
+        }), 400
+
+    destino = config.TEMPLATES_DIR / nombre_seguro
+    archivo.save(str(destino))
+    LOG.info("[PDF] Nueva plantilla guardada: %s", destino.name)
+
+    tipo = "pptx" if extension == ".pptx" else "pdf"
+    ruta_relativa = str(destino.relative_to(config.BASE_DIR)).replace("\\", "/")
+
+    return jsonify({
+        "ok": True,
+        "mensaje": f"Plantilla «{nombre_seguro}» cargada con éxito. Ya puedes seleccionarla para tus certificados.",
+        "plantilla": {
+            "nombre": nombre_seguro,
+            "titulo": f"{nombre_seguro} ({tipo.upper()})",
+            "archivo": nombre_seguro,
+            "ruta": ruta_relativa,
+            "tipo": tipo,
+            "es_oficial": False,
+            "descripcion": f"Plantilla personalizada ({tipo.upper()}) cargada recientemente.",
+        }
+    })
+
+
+@app.route("/api/vista-previa-correo", methods=["GET", "POST"])
+def api_vista_previa_correo():
+    """Genera la vista previa de cómo se enviará el correo con la plantilla seleccionada."""
+    datos = request.get_json(silent=True) or request.form or request.args
+    evento = (datos.get("evento") or "Congreso de Inteligencia Artificial 2026").strip()
+    destinatario = (datos.get("destinatario") or "participante@unilasallista.edu.co").strip()
+    nombre = (datos.get("nombre") or "Juan Pérez González").strip()
+    rol = (datos.get("rol") or "Ponente").strip()
+    plantilla = (datos.get("plantilla") or "Certificados.pptx").strip()
+
+    nombre_adjunto = f"Certificado_{secure_filename(nombre)}.pdf"
+    preview = mail_service.obtener_vista_previa_correo(
+        destinatario=destinatario,
+        nombre=nombre,
+        evento=evento,
+        rol=rol,
+        archivo_adjunto=nombre_adjunto,
+    )
+    preview["plantilla_origen"] = Path(plantilla).name
+    return jsonify({"ok": True, "vista_previa": preview})
 
 
 @app.route("/health")

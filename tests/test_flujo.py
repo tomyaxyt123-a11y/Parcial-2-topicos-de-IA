@@ -471,7 +471,7 @@ def test_flujo_completo_api(excel_valido):
     assert cuerpo["detalle"]["roles"]["ok"] == 5
     assert cuerpo["detalle"]["roles"]["error"] == 0
 
-    # Segunda ejecución: todos los participantes ya fueron enviados -> omitidos
+    # Segunda ejecución: todos los participantes se vuelven a procesar y generar sí o sí
     with open(excel_valido, "rb") as archivo:
         segunda = cliente.post(
             "/procesar",
@@ -484,8 +484,8 @@ def test_flujo_completo_api(excel_valido):
 
     cuerpo_segundo = segunda.get_json()
     assert cuerpo_segundo["ok"] is True
-    assert cuerpo_segundo["detalle"]["roles"]["omitido"] == 5
-    assert cuerpo_segundo["detalle"]["roles"]["ok"] == 0
+    assert cuerpo_segundo["detalle"]["roles"]["ok"] == 5
+    assert cuerpo_segundo["detalle"]["roles"]["error"] == 0
 
 
 def test_api_estado_y_trazabilidad():
@@ -529,3 +529,40 @@ def test_excel_de_ejemplo_es_valido():
     # Todos los correos del ejemplo son válidos
     for participante in participantes:
         assert ia_validator.validar_correo_ia(participante["correo"])
+
+
+def test_api_configuracion_correo():
+    """Valida lectura y actualización dinámica del remitente SMTP con advertencia de seguridad."""
+    import app as modulo_app
+
+    cliente = modulo_app.app.test_client()
+    
+    # 1. Consulta GET inicial
+    res_get = cliente.get("/api/configuracion-correo").get_json()
+    assert res_get["ok"] is True
+    assert "smtp_from" in res_get
+
+    # 2. Actualización POST exitosa con nueva contraseña
+    nuevo_correo = "certificados.prueba@unilasallista.edu.co"
+    nuevo_nombre = "Unilasallista Oficial"
+    nueva_clave = "ClaveSecreta123!"
+    res_post = cliente.post(
+        "/api/configuracion-correo",
+        json={"correo": nuevo_correo, "nombre": nuevo_nombre, "password": nueva_clave},
+    ).get_json()
+
+    assert res_post["ok"] is True
+    assert res_post["smtp_from"] == nuevo_correo
+    assert res_post["smtp_from_name"] == nuevo_nombre
+    assert res_post["tiene_password"] is True
+    assert "Advertencia: El correo de envío ha sido modificado exitosamente." in res_post["mensaje_advertencia"]
+    assert "Todos los envíos futuros se realizarán desde esta nueva dirección." in res_post["mensaje_advertencia"]
+
+    # 3. Validación de correo inválido
+    res_invalido = cliente.post(
+        "/api/configuracion-correo",
+        json={"correo": "correo-invalido-sin-arroba", "nombre": "Test"},
+    )
+    assert res_invalido.status_code == 400
+    assert res_invalido.get_json()["ok"] is False
+

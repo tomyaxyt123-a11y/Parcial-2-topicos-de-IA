@@ -39,15 +39,19 @@ COLOR_TEXTO = colors.HexColor("#333333")
 COLOR_SUAVE = colors.HexColor("#666666")
 
 RAIZ = Path(__file__).resolve().parent.parent
-LOGO_POR_DEFECTO = RAIZ / "static" / "logo_unilasalle.png"
+LOGO_POR_DEFECTO = (
+    RAIZ / "static" / "logo_unilasallista.png"
+    if (RAIZ / "static" / "logo_unilasallista.png").exists()
+    else RAIZ / "static" / "logo_unilasalle.png"
+)
 PLANTILLA_POR_DEFECTO = RAIZ / "templates" / "certificado_base.pdf"
 
 
 # --------------------------------------------------------------------------
 # Utilidades
 # --------------------------------------------------------------------------
-def formatear_fecha_es(fecha: Optional[object] = None, ciudad: str = "Bogotá D.C.") -> str:
-    """Devuelve la fecha en formato institucional: 'Bogotá D.C., 21 de octubre de 2026'."""
+def formatear_fecha_es(fecha: Optional[object] = None, ciudad: str = "Caldas, Antioquia") -> str:
+    """Devuelve la fecha en formato institucional: 'Caldas, Antioquia, 21 de octubre de 2026'."""
     if fecha is None:
         fecha = date.today()
     elif isinstance(fecha, str):
@@ -172,7 +176,7 @@ def _dibujar_contenido(c: canvas.Canvas, datos: Dict[str, object]) -> None:
     c.setFillColor(COLOR_SUAVE)
     c.drawCentredString(
         ancho / 2, y,
-        "La Universidad de La Salle, en cumplimiento de sus fines académicos, certifica que",
+        "La Corporación Universitaria Unilasallista, en cumplimiento de sus fines académicos, certifica que",
     )
     y -= 20 * mm
 
